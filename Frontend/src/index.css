@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* --- Light Theme --- */
+    --background: 240 10% 97%;            /* A very light, clean background for other pages */
+    --foreground: 240 10% 15%;            /* High-contrast dark text for other pages */
+    
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 15%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 15%;
+    
+    --primary: 258 90% 66%;
+    /* CRITICAL FIX: The text on your landing page is always on a dark gradient.
+       Therefore, --primary-foreground MUST be a light color in BOTH themes. */
+    --primary-foreground: 0 0% 100%;      /* Pure white for maximum pop on your gradient */
+    
+    --secondary: 240 5% 90%;
+    --secondary-foreground: 240 10% 10%;
+    
+    --muted: 240 5% 90%;
+    --muted-foreground: 240 5% 45%;
+    
+    --accent: 142 76% 87%;
+    --accent-foreground: 142 76% 15%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 240 5% 85%;
+    --input: 240 5% 85%;
+    --ring: 258 90% 66%;
+    
+    --radius: 0.75rem;
+    
+    /* Your original gradients, shadows, and animations are kept */
+    --gradient-hero: linear-gradient(135deg, hsl(258 90% 66%) 0%, hsl(266 83% 75%) 50%, hsl(142 76% 67%) 100%);
+    --shadow-glow: 0 10px 40px -10px hsl(var(--primary) / 0.3);
+    /* ... (rest of your variables are fine) */
+  }
+
+  .dark {
+    /* --- Dark Theme --- */
+    --background: 240 10% 4%;             /* A deep, dark background for other pages */
+    --foreground: 240 5% 95%;             /* High-contrast light text for other pages */
+    
+    --card: 240 10% 10%;
+    --card-foreground: 240 5% 90%;
+    
+    --popover: 240 10% 10%;
+    --popover-foreground: 240 5% 90%;
+    
+    --primary: 266 83% 75%;
+    /* CRITICAL FIX: Same as above. This ensures text stays visible when you switch themes. */
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 240 5% 15%;
+    --secondary-foreground: 240 5% 95%;
+    
+    --muted: 240 5% 15%;
+    --muted-foreground: 240 5% 65%;
+    
+    --accent: 142 50% 25%;
+    --accent-foreground: 142 76% 85%;
+    
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 240 5% 95%;
+    
+    --border: 240 5% 20%;
+    --input: 240 5% 20%;
+    --ring: 266 83% 75%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+}
