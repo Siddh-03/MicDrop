@@ -2,24 +2,41 @@ import { useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { useToast } from "@/components/ui/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mic, Plus, LogOut, BarChart3, TrendingUp, Users, Clock, Calendar, Trash2, Edit } from "lucide-react";
+import { Plus, BarChart3, TrendingUp, Users, Calendar, Trash2, Edit } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
-interface UserData { _id: string; username: string; email: string; createdAt: string; }
-interface SessionData { _id: string; title: string; sessionCode: string; status: "upcoming" | "active" | "completed"; scheduledFor: string; gracePeriod: string; }
+// --- INTERFACES ---
+interface UserData {
+  _id: string;
+  username: string;
+  email: string;
+  createdAt: string;
+}
+// FIXED: Status enum now matches the backend model ('upcoming' -> 'waiting', 'completed' -> 'ended')
+interface SessionData {
+  _id: string;
+  title: string;
+  sessionCode: string;
+  status: "upcoming" | "active" | "completed";
+  scheduledFor: string;
+  gracePeriod: string;
+}
 
 const Dashboard = () => {
+  // --- HOOKS ---
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // --- STATE ---
   const [user, setUser] = useState<UserData | null>(null);
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAllSessions, setShowAllSessions] = useState(false); // NEW: State for "View All" button
 
   // State for the update modal
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -27,35 +44,38 @@ const Dashboard = () => {
   const [updatedTitle, setUpdatedTitle] = useState("");
   const [updatedDate, setUpdatedDate] = useState("");
   const [updatedTime, setUpdatedTime] = useState("");
-  const [updatedGracePeriod, setUpdatedGracePeriod] = useState("15"); // Grace period
+  const [updatedGracePeriod, setUpdatedGracePeriod] = useState("15");
 
-  // Validation helpers for "min" date/time
+  // --- DERIVED STATE & MEMOS ---
   const today = new Date().toISOString().split('T')[0];
-  const now = new Date();
-  now.setMinutes(now.getMinutes() + 1);
-  const currentTime = now.toTimeString().split(' ')[0].substring(0, 5);
-
-  // When modal is opened, prefill with session data
-  const openUpdateModal = (session: SessionData) => {
-    setEditingSession(session);
-    setUpdatedTitle(session.title);
-    setUpdatedGracePeriod(session.gracePeriod);
-    const sessionDate = new Date(session.scheduledFor);
-    setUpdatedDate(sessionDate.toISOString().split('T')[0]);
-    setUpdatedTime(sessionDate.toTimeString().split(' ')[0].substring(0, 5));
-    setIsModalOpen(true);
-  };
-
-  // Modal validation: If date matches today, time can't be in past
   const minTime = useMemo(() => {
+    const now = new Date();
+    now.setMinutes(now.getMinutes() + 1);
+    const currentTime = now.toTimeString().split(' ')[0].substring(0, 5);
     return updatedDate === today ? currentTime : "";
-  }, [updatedDate, today, currentTime]);
+  }, [updatedDate, today]);
 
+  // NEW: Memoized list of sessions to display based on the "View All" state
+  const displayedSessions = useMemo(() => {
+    // Sort sessions by date to ensure "recent" is accurate
+    const sortedSessions = [...sessions].sort((a, b) => new Date(b.scheduledFor).getTime() - new Date(a.scheduledFor).getTime());
+    return showAllSessions ? sortedSessions : sortedSessions.slice(0, 3);
+  }, [sessions, showAllSessions]);
+
+
+  // --- DATA FETCHING ---
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // CORRECTED: All API calls now point to the correct port:3000
         const userResponse = await fetch("http://localhost:3000/api/me", { credentials: "include" });
-        if (!userResponse.ok) throw new Error("Authentication failed.");
+        if (!userResponse.ok) {
+           if (userResponse.status === 401) {
+              navigate("/auth/login");
+              return;
+           }
+           throw new Error("Authentication check failed.");
+        }
         const userData: UserData = await userResponse.json();
         setUser(userData);
 
@@ -65,24 +85,18 @@ const Dashboard = () => {
         setSessions(sessionsData);
       } catch (error) {
         console.error(error);
+        toast({ variant: "destructive", title: "Error", description: "Could not load dashboard data. Please log in again." });
         navigate("/auth/login");
       } finally {
         setLoading(false);
       }
     };
     fetchData();
-  }, [navigate]);
+  }, [navigate, toast]);
 
-  const handleLogout = async () => {
-    try {
-      await fetch("http://localhost:3000/api/logout", { method: "POST", credentials: "include" });
-      navigate("/auth/login");
-    } catch (error) {
-      console.error("Logout failed", error);
-    }
-  };
-
-  const handleDeleteSession = async (sessionId: string) => {
+  // --- EVENT HANDLERS ---
+  const handleDeleteSession = async (event: React.MouseEvent, sessionId: string) => {
+    event.stopPropagation(); // Prevent the card's onClick from firing
     if (!window.confirm("Are you sure you want to delete this session?")) return;
     try {
       const response = await fetch(`http://localhost:3000/api/sessions/${sessionId}`, { method: 'DELETE', credentials: 'include' });
@@ -124,14 +138,36 @@ const Dashboard = () => {
       toast({ variant: "destructive", title: "Error", description: error.message });
     }
   };
+  
+  const openUpdateModal = (event: React.MouseEvent, session: SessionData) => {
+    event.stopPropagation(); // Prevent card click when opening modal
+    setEditingSession(session);
+    setUpdatedTitle(session.title);
+    setUpdatedGracePeriod(session.gracePeriod);
+    const sessionDate = new Date(session.scheduledFor);
+    setUpdatedDate(sessionDate.toISOString().split('T')[0]);
+    setUpdatedTime(sessionDate.toTimeString().split(' ')[0].substring(0, 5));
+    setIsModalOpen(true);
+  };
+
+  const handleSessionClick = (session: SessionData) => {
+  // Prevent navigation to completed sessions
+  if (session.status === 'completed') {
+    toast({
+      title: "Session Completed",
+      description: "This session has already ended and cannot be accessed.",
+    });
+    return;
+  }
+  navigate(`/session/${session.sessionCode}/dashboard`);
+};
+
 
   if (loading) return <div className="min-h-screen flex items-center justify-center">Loading Dashboard...</div>;
 
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/10">
-        
-
         <main className="max-w-6xl mx-auto p-6">
           <div className="mb-8">
             <h2 className="text-3xl font-bold mb-2">
@@ -154,27 +190,27 @@ const Dashboard = () => {
               </CardContent>
             </Card>
             <Card className="bg-gradient-card border shadow-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Avg Engagement</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">0%</div>
-                <p className="text-xs text-muted-foreground">No data yet</p>
-              </CardContent>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Avg Engagement</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">0%</div>
+                    <p className="text-xs text-muted-foreground">No data yet</p>
+                </CardContent>
             </Card>
             <Card className="bg-gradient-card border shadow-card">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Audience</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">0</div>
-                <p className="text-xs text-muted-foreground">No data yet</p>
-              </CardContent>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Total Audience</CardTitle>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">0</div>
+                    <p className="text-xs text-muted-foreground">No data yet</p>
+                </CardContent>
             </Card>
           </div>
-
+          
           <div className="mb-8">
             <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -212,39 +248,54 @@ const Dashboard = () => {
               </Card>
             </div>
           </div>
-
+          
           <div>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold">Recent Sessions</h3>
-              <Button variant="outline" size="sm">View All</Button>
+              {/* NEW: "View All" button logic */}
+              {sessions.length > 3 && (
+                <Button variant="outline" size="sm" onClick={() => setShowAllSessions(!showAllSessions)}>
+                  {showAllSessions ? "Show Less" : "View All"}
+                </Button>
+              )}
             </div>
             <div className="space-y-4">
-              {sessions.length > 0 ? (
-                sessions.map((session) => (
-                  <Card key={session._id} className="bg-gradient-card border shadow-card hover:shadow-lg transition-all duration-300">
+              {/* UPDATED: Uses `displayedSessions` to render the list */}
+              {displayedSessions.length > 0 ? (
+                displayedSessions.map((session) => (
+                  <Card 
+                    key={session._id} 
+                    className="bg-gradient-card border shadow-card hover:shadow-lg transition-all duration-300 cursor-pointer"
+                    onClick={() => handleSessionClick(session)}
+                  >
                     <CardContent className="pt-6 flex items-center justify-between">
                       <div className="flex-1">
                         <h4 className="font-semibold">{session.title}</h4>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground mt-2">
+                        <div className="flex items-center flex-wrap gap-4 text-sm text-muted-foreground mt-2">
                           <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
                             {new Date(session.scheduledFor).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
                           </div>
-                          <Badge variant={session.status === 'upcoming' ? 'default' : 'secondary'}>{session.status}</Badge>
-                          <span className="ml-2 text-xs text-muted-foreground">Grace: {session.gracePeriod} min</span>
+                          <Badge 
+                            variant={session.status === 'active' ? 'destructive' : (session.status === 'upcoming' ? 'default' : 'secondary')}
+                          >
+                            {session.status}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">Grace: {session.gracePeriod} min</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="text-right mr-4">
+                        <div className="text-right mr-4 hidden sm:block">
                           <p className="text-sm text-muted-foreground">Session Code</p>
                           <p className="text-2xl font-bold text-primary">{session.sessionCode}</p>
                         </div>
+                        {/* FIXED: Condition changed from 'upcoming' to 'waiting' */}
                         {session.status === 'upcoming' && (
-                          <Button variant="outline" size="icon" onClick={() => openUpdateModal(session)}>
+                          <Button variant="outline" size="icon" onClick={(e) => openUpdateModal(e, session)}>
                             <Edit className="h-4 w-4" />
                           </Button>
                         )}
-                        <Button variant="destructive" size="icon" onClick={() => handleDeleteSession(session._id)}>
+                        <Button variant="destructive" size="icon" onClick={(e) => handleDeleteSession(e, session._id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -266,7 +317,6 @@ const Dashboard = () => {
         </main>
       </div>
 
-      {/* Update Session Modal */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>

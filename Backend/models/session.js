@@ -6,32 +6,33 @@ const sessionSchema = new mongoose.Schema({
     required: true,
     trim: true,
   },
-  scheduledFor: {
-    type: Date,
-    required: true,
-  },
-  // NEW: Field to store the grace period
-  gracePeriod: {
-    type: String,
-    required: true,
-  },
   sessionCode: {
     type: String,
     required: true,
     unique: true,
-  },
-  status: {
-    type: String,
-    enum: ['upcoming', 'active', 'completed'],
-    default: 'upcoming',
   },
   speaker: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true,
   },
-}, { timestamps: true });
+  status: {
+    type: String,
+    enum: ['upcoming', 'active', 'completed'],
+    default: 'upcoming', // Default status when a session is created
+  },
+  scheduledFor: {
+    type: Date,
+    required: true,
+  },
+  gracePeriod: {
+    type: Number, // Storing as a number of minutes
+    required: true,
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
-const Session = mongoose.model('Session', sessionSchema);
-
-module.exports = Session;
+module.exports = mongoose.model('Session', sessionSchema);

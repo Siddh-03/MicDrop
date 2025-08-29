@@ -6,7 +6,8 @@
     "express": "^5.1.0",
     "js-cookie": "^3.0.5",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.17.1"
+    "mongoose": "^8.17.1",
+    "socket.io": "^4.8.1"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.6"

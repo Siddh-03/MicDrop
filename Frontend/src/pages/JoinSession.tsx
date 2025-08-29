@@ -1,29 +1,51 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { Mic, ArrowLeft, Users } from "lucide-react"
-import { Link, useNavigate } from "react-router-dom"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Users, Loader2 } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 const JoinSession = () => {
-  const [sessionCode, setSessionCode] = useState("")
-  const navigate = useNavigate()
+  const [sessionCode, setSessionCode] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
-  const handleJoinSession = () => {
-    if (sessionCode.trim()) {
-      // In a real app, this would validate the session code
-      navigate(`/session/${sessionCode}/voting`)
+  const handleJoinSession = async () => {
+    if (!sessionCode.trim() || sessionCode.length < 6) return;
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('http://localhost:3000/api/sessions/join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sessionCode }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to join session.');
+      }
+
+      // If the backend validation is successful, navigate to the voting page
+      navigate(`/session/${data.sessionCode}/voting`);
+
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Could not join session",
+        description: error.message,
+      });
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-accent/10">
-      {/* Header */}
-      
-
-      {/* Main Content */}
       <main className="max-w-md mx-auto px-6 py-12">
         <Card className="bg-gradient-card border shadow-card">
           <CardHeader className="text-center">
@@ -32,7 +54,7 @@ const JoinSession = () => {
             </div>
             <CardTitle className="text-2xl mb-2">Join Session</CardTitle>
             <CardDescription>
-              Enter the session code provided by the speaker to join the live feedback session
+              Enter the 6-digit code from the speaker to join.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -43,22 +65,24 @@ const JoinSession = () => {
               <Input
                 id="sessionCode"
                 type="text"
-                placeholder="Enter 6-digit code (e.g., ABC123)"
+                placeholder="123ABC"
                 value={sessionCode}
                 onChange={(e) => setSessionCode(e.target.value.toUpperCase())}
                 className="text-center text-lg tracking-widest font-mono"
                 maxLength={6}
+                onKeyDown={(e) => e.key === 'Enter' && handleJoinSession()}
               />
             </div>
             
             <Button 
               onClick={handleJoinSession}
-              disabled={sessionCode.length < 6}
+              disabled={sessionCode.length < 6 || isLoading}
               variant="audience"
               size="lg"
               className="w-full"
             >
-              Join Session
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {isLoading ? 'Validating...' : 'Join Session'}
             </Button>
 
             <div className="text-center pt-4">
@@ -72,7 +96,6 @@ const JoinSession = () => {
           </CardContent>
         </Card>
 
-        {/* Info Card */}
         <Card className="mt-8 bg-muted/50">
           <CardContent className="pt-6">
             <div className="text-center">
@@ -89,4 +112,4 @@ const JoinSession = () => {
   )
 }
 
-export default JoinSession
+export default JoinSession;
