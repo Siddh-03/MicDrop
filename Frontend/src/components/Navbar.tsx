@@ -2,9 +2,8 @@ import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Mic, Menu, LogOut, User, LayoutDashboard } from "lucide-react"
 import { Link, useLocation, useNavigate } from "react-router-dom"
-import { useState /*, useEffect*/ } from "react"
+import { useState } from "react"
 import { useAuth } from "@/context/AuthContext"
-// import Cookies from 'js-cookie' // Legacy, not needed if you use context
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -12,24 +11,16 @@ const Navbar = () => {
   const location = useLocation()
   const navigate = useNavigate()
 
-  // If you want legacy fallback cookie check (typically not needed):
-  // const [isLoggedIn, setIsLoggedIn] = useState(false)
-  // useEffect(() => {
-  //   const token = Cookies.get('token');
-  //   setIsLoggedIn(!!token)
-  // }, [location]);
+
 
   const isActive = (path: string) => location.pathname === path
 
   const handleLogout = async () => {
     await logout()
-    // If you keep js-cookie and backend sets non-httpOnly cookie:
-    // Cookies.remove('token');
+    
     navigate('/auth/login')
   }
-
-  // Use context-based auth for nav
-  const isAuthenticated = authState?.status === 'authenticated' // || isLoggedIn (fallback)
+  const isAuthenticated = authState?.status === 'authenticated' 
 
   const navItems = isAuthenticated
     ? [

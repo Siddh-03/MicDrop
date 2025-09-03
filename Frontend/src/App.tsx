@@ -20,20 +20,16 @@ import AudienceVoting from "./pages/AudienceVoting";
 
 const queryClient = new QueryClient();
 
-// NEW: Updated route guard that handles the loading state
 const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
   const { authState } = useAuth();
 
   if (authState.status === 'loading') {
-    // While checking, show a loading screen to prevent the "blink"
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
   
-  // If the check is complete and user is not authenticated, redirect
   return authState.status === 'authenticated' ? children : <Navigate to="/auth/login" replace />;
 };
 
-// NEW: Updated public route guard
 const PublicRoute = ({ children }: { children: JSX.Element }) => {
   const { authState } = useAuth();
 
@@ -41,7 +37,6 @@ const PublicRoute = ({ children }: { children: JSX.Element }) => {
     return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
   }
 
-  // If the check is complete and user is authenticated, redirect away from login page
   return authState.status === 'authenticated' ? <Navigate to="/dashboard" replace /> : children;
 };
 

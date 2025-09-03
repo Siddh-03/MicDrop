@@ -30,7 +30,6 @@ const JoinSession = () => {
         throw new Error(data.message || 'Failed to join session.');
       }
 
-      // If the backend validation is successful, navigate to the voting page
       navigate(`/session/${data.sessionCode}/voting`);
 
     } catch (error: any) {

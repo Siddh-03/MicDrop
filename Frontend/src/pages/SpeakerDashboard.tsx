@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // Import useRef
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -41,12 +41,14 @@ const SpeakerDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  // Backend session state
+  // ✅ Use a ref to hold the socket instance.
+  // This ensures the same socket connection is used across all re-renders.
+  const socketRef = useRef<Socket | null>(null);
+
   const [session, setSession] = useState<SessionDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Real-time engagement state
   const [audienceCount, setAudienceCount] = useState(0);
   const [positiveVotes, setPositiveVotes] = useState(0);
   const [negativeVotes, setNegativeVotes] = useState(0);
@@ -56,7 +58,6 @@ const SpeakerDashboard = () => {
   const positivePercentage =
     totalVotes > 0 ? Math.round((positiveVotes / totalVotes) * 100) : 0;
 
-  // EngMsg for speaker
   const engagementMessage =
     positivePercentage >= 60
       ? "🎉 Great job! Your audience is highly engaged."
@@ -64,7 +65,7 @@ const SpeakerDashboard = () => {
       ? "👍 Good engagement. Keep it up!"
       : "⚠️ Consider adjusting your approach to re-engage your audience.";
 
-  // Fetch session data from backend
+  // This useEffect for fetching data is fine, no changes needed.
   useEffect(() => {
     const fetchSessionData = async () => {
       try {
@@ -92,41 +93,49 @@ const SpeakerDashboard = () => {
     fetchSessionData();
   }, [sessionCode, toast]);
 
-  // Connect WebSocket when session is active
   useEffect(() => {
-    if (!session || session.status !== "active") return;
+    if (session?.status !== "active") {
+      return;
+    }
 
-    const socket: Socket = io("http://localhost:3000");
+    if (!socketRef.current) {
+      socketRef.current = io("http://localhost:3000");
+      const socket = socketRef.current;
 
-    socket.on("connect", () => {
-      console.log("Speaker connected to WebSocket");
-      socket.emit("join-session", sessionCode);
-    });
+      socket.on("connect", () => {
+        console.log("Speaker connected with socket ID:", socket.id);
+        socket.emit("join-session", sessionCode);
+      });
 
-    socket.on(
-      "update-stats",
-      (stats: { audience: number; positive: number; negative: number }) => {
-        setAudienceCount(stats.audience);
-        setPositiveVotes(stats.positive);
-        setNegativeVotes(stats.negative);
+      socket.on("disconnect", () => {
+        console.log("Speaker disconnected from WebSocket.");
+      });
 
-        // 🚨 Trigger alert if engagement too low
-        const total = stats.positive + stats.negative;
-        const score = total > 0 ? (stats.positive / total) * 100 : 0;
-        if (score < 40 && !alertTriggered) {
-          setAlertTriggered(true);
-        } else if (score >= 40 && alertTriggered) {
-          setAlertTriggered(false);
+      socket.on(
+        "update-stats",
+        (stats: { audience: number; positive: number; negative: number }) => {
+          console.log("[Client] Received update-stats event:", stats);
+          // This will now reliably update the state.
+          setAudienceCount(stats.audience);
+          setPositiveVotes(stats.positive);
+          setNegativeVotes(stats.negative);
+
+          const total = stats.positive + stats.negative;
+          const score = total > 0 ? (stats.positive / total) * 100 : 0;
+          setAlertTriggered(score < 40);
         }
-      }
-    );
+      );
+    }
 
     return () => {
-      socket.disconnect();
+      if (socketRef.current) {
+        console.log("Cleanup: Disconnecting socket.");
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
     };
-  }, [session, sessionCode, alertTriggered]);
+  }, [session?.status, sessionCode]); 
 
-  // API actions
   const handleStartSession = async () => {
     try {
       const response = await fetch(
@@ -168,82 +177,34 @@ const SpeakerDashboard = () => {
 
   const generateQRCodeUrl = () => {
     const joinUrl = `${window.location.origin}/join?code=${sessionCode}`;
-    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${joinUrl}`;
+    return `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(
+      joinUrl
+    )}`;
   };
 
-  // Loading/Error states
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin" />
-        <p className="ml-4">Loading Speaker Dashboard...</p>
+        Loading...
       </div>
     );
   }
+
   if (error || !session) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <Card className="bg-gradient-card border shadow-card text-center p-8">
-          <CardContent>
-            <div className="mb-6 p-4 bg-destructive/20 rounded-full w-fit mx-auto">
-              <XCircle className="h-8 w-8 text-destructive" />
-            </div>
-            <h2 className="text-2xl font-bold mb-4">Error</h2>
-            <p className="text-muted-foreground mb-6">
-              {error || "Could not load session"}
-            </p>
-            <Button onClick={() => navigate("/dashboard")}>
-              Back to Dashboard
-            </Button>
-          </CardContent>
-        </Card>
+        Error: {error || "Could not load session"}
       </div>
     );
   }
 
-  // Render states
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/10">
-      {/* HEADER */}
-      <header className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="max-w-4xl mx-auto flex items-center justify-between p-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Mic className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold truncate">{session.title}</h1>
-              <p className="text-sm text-muted-foreground">
-                Session Code: {sessionCode}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            <Badge
-              variant={
-                session.status === "active"
-                  ? "default"
-                  : session.status === "completed"
-                  ? "destructive"
-                  : "secondary"
-              }
-            >
-              {session.status.charAt(0).toUpperCase() +
-                session.status.slice(1)}
-            </Badge>
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-
-      {/* MAIN */}
       <main className="max-w-4xl mx-auto p-6">
-        {/* UPCOMING */}
         {session.status === "upcoming" && (
           <div className="space-y-8 text-center">
             <h2 className="text-3xl font-bold">Session is Ready</h2>
             <p className="text-muted-foreground">Share the code to begin.</p>
-
             <div className="grid md:grid-cols-2 gap-8">
               <Card className="bg-gradient-card border shadow-card">
                 <CardHeader className="text-center">
@@ -266,7 +227,6 @@ const SpeakerDashboard = () => {
                 </CardContent>
               </Card>
             </div>
-
             <Button
               onClick={handleStartSession}
               variant="hero"
@@ -278,7 +238,6 @@ const SpeakerDashboard = () => {
           </div>
         )}
 
-        {/* ACTIVE */}
         {session.status === "active" && (
           <div className="space-y-8">
             {alertTriggered && (
@@ -303,10 +262,9 @@ const SpeakerDashboard = () => {
               Monitoring audience feedback
             </p>
 
-            {/* Stats */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
-                <CardHeader className="flex justify-between pb-2">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
                     Audience
                   </CardTitle>
@@ -317,19 +275,23 @@ const SpeakerDashboard = () => {
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader className="flex justify-between pb-2">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
                   <CardTitle className="text-sm font-medium">
                     Engagement Score
                   </CardTitle>
                   <BarChart3 className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{positivePercentage}%</div>
+                  <div className="text-2xl font-bold">
+                    {positivePercentage}%
+                  </div>
                 </CardContent>
               </Card>
               <Card>
-                <CardHeader className="flex justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Total Votes</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Total Votes
+                  </CardTitle>
                   <QrCode className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
@@ -338,10 +300,11 @@ const SpeakerDashboard = () => {
               </Card>
             </div>
 
-            {/* Gauge */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-center">Live Engagement Gauge</CardTitle>
+                <CardTitle className="text-center">
+                  Live Engagement Gauge
+                </CardTitle>
                 <CardDescription className="text-center">
                   Real-time breakdown
                 </CardDescription>
@@ -367,14 +330,17 @@ const SpeakerDashboard = () => {
             </Card>
 
             <div className="text-center">
-              <Button onClick={handleEndSession} variant="destructive" size="lg">
+              <Button
+                onClick={handleEndSession}
+                variant="destructive"
+                size="lg"
+              >
                 <Square className="h-5 w-5 mr-2" /> End Session
               </Button>
             </div>
           </div>
         )}
 
-        {/* COMPLETED */}
         {session.status === "completed" && (
           <div className="text-center py-16">
             <Card className="max-w-md mx-auto bg-gradient-card border shadow-card">

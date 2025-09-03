@@ -19,14 +19,14 @@ const sessionSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['upcoming', 'active', 'completed'],
-    default: 'upcoming', // Default status when a session is created
+    default: 'upcoming', 
   },
   scheduledFor: {
     type: Date,
     required: true,
   },
   gracePeriod: {
-    type: Number, // Storing as a number of minutes
+    type: Number, 
     required: true,
   },
   createdAt: {

@@ -1,41 +1,51 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { Mic, ArrowLeft, Mail, Lock, User } from "lucide-react"
-import { Link, useNavigate } from "react-router-dom"
-import { useToast } from "@/components/ui/use-toast"
-import { useAuth } from "@/context/AuthContext"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Mic, ArrowLeft, Mail, Lock, User } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 const Auth = () => {
-  const [isLoading, setIsLoading] = useState(false)
-  const navigate = useNavigate()
-  const { toast } = useToast()
-  const { login } = useAuth()
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { login } = useAuth();
 
   // Login form states
-  const [loginEmail, setLoginEmail] = useState("")
-  const [loginPassword, setLoginPassword] = useState("")
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
 
   // Signup form states
-  const [signupUsername, setSignupUsername] = useState("")
-  const [signupEmail, setSignupEmail] = useState("")
-  const [signupPassword, setSignupPassword] = useState("")
+  const [signupUsername, setSignupUsername] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
 
   // Handle login/signup
   const handleAuth = async (type: "login" | "signup") => {
-    setIsLoading(true)
+    setIsLoading(true);
 
-    const isLogin = type === "login"
+    const isLogin = type === "login";
     const endpoint = isLogin
-      ? "http://localhost:3000/api/login"
-      : "http://localhost:3000/api/signup"
+      ? "http://localhost:3000/api/auth/login"
+      : "http://localhost:3000/api/auth/signup";
     const payload = isLogin
       ? { email: loginEmail, password: loginPassword }
-      : { username: signupUsername, email: signupEmail, password: signupPassword }
+      : {
+          username: signupUsername,
+          email: signupEmail,
+          password: signupPassword,
+        };
 
     try {
       // 1. Attempt login/signup
@@ -44,38 +54,41 @@ const Auth = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
         credentials: "include",
-      })
-      const data = await response.json()
+      });
+      const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message || `Failed to ${type}`)
+        throw new Error(data.message || `Failed to ${type}`);
       }
 
       // 2. Fetch user profile after auth and update context
-      const userResponse = await fetch("http://localhost:3000/api/me", { credentials: "include" })
-      const userData = await userResponse.json()
+      const userResponse = await fetch("http://localhost:3000/api/auth/me", {
+        credentials: "include",
+      });
+      const userData = await userResponse.json();
       if (!userResponse.ok) {
-        throw new Error(userData.message || "Could not fetch user data after login/signup.")
+        throw new Error(
+          userData.message || "Could not fetch user data after login/signup."
+        );
       }
-      login(userData)
+      login(userData);
 
       // 3. Show success and redirect
-      toast({ title: "Success!", description: data.message })
-      navigate("/dashboard")
+      toast({ title: "Success!", description: data.message });
+      navigate("/dashboard");
     } catch (error: any) {
-      console.error(`${type} failed:`, error)
+      console.error(`${type} failed:`, error);
       toast({
         variant: "destructive",
         title: "Uh oh!",
         description: error.message || "Unexpected error.",
-      })
+      });
     } finally {
-      setIsLoading(false)
+      setIsLoading(false);
     }
-  }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/10">
-
       {/* Main Content */}
       <main className="max-w-md mx-auto px-6 py-8">
         <Card className="bg-gradient-card border shadow-card">
@@ -195,7 +208,8 @@ const Auth = () => {
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
                 <p className="text-xs text-muted-foreground text-center">
-                  By creating an account, you agree to our Terms of Service and Privacy Policy.
+                  By creating an account, you agree to our Terms of Service and
+                  Privacy Policy.
                 </p>
               </TabsContent>
             </Tabs>
@@ -218,7 +232,7 @@ const Auth = () => {
         </Card>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default Auth
+export default Auth;
