@@ -141,7 +141,7 @@ const Auth = () => {
                 <Button
                   onClick={() => handleAuth("login")}
                   disabled={isLoading}
-                  variant="speaker"
+                  variant="outline"
                   size="lg"
                   className="w-full"
                 >
@@ -201,7 +201,7 @@ const Auth = () => {
                 <Button
                   onClick={() => handleAuth("signup")}
                   disabled={isLoading}
-                  variant="speaker"
+                  variant="outline"
                   size="lg"
                   className="w-full"
                 >

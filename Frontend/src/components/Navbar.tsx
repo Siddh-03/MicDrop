@@ -66,7 +66,7 @@ const Navbar = () => {
               </Button>
             ) : (
               <Link to="/auth/login">
-                <Button variant="default" size="sm" className={isActive("/auth/login") ? "bg-primary text-primary-foreground" : ""}>
+                <Button variant="ghost" size="sm" className={isActive("/auth/login") ? "bg-primary text-primary-foreground" : ""}>
                   <User className="h-4 w-4 mr-2" />
                   Login
                 </Button>
