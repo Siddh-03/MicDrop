@@ -9,10 +9,11 @@ import Cookies from "js-cookie";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
+// TypeScript Interfaces
 interface UserData {
   _id: string;
   username: string;
-  email: string;
+  email:string;
 }
 
 interface AuthState {
@@ -22,45 +23,50 @@ interface AuthState {
 
 interface AuthContextType {
   authState: AuthState;
-  login: (userData: UserData) => void;
+  login: () => void; // Changed: No longer takes an argument
   logout: () => Promise<void>;
 }
 
+// Create the context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Create the provider component
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  // The app starts in a 'loading' state until we verify the user
   const [authState, setAuthState] = useState<AuthState>({
     status: "loading",
     user: null,
   });
 
-  useEffect(() => {
-    const verifyUser = async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-          credentials: "include",
-        });
+  // This is the single function responsible for checking the user's status
+  const verifyUser = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+        credentials: "include",
+      });
 
-        if (!response.ok) {
-          throw new Error("Token verification failed. User is not logged in.");
-        }
-
-        const userData = await response.json();
-        setAuthState({ status: "authenticated", user: userData });
-      } catch (error) {
-        console.warn("User is not authenticated:", (error as Error).message);
-        Cookies.remove("token"); 
-        setAuthState({ status: "unauthenticated", user: null });
+      if (!response.ok) {
+        throw new Error("Token verification failed.");
       }
-    };
-    verifyUser();
-  }, []); 
 
-  const login = (userData: UserData) => {
-    setAuthState({ status: "authenticated", user: userData });
+      const userData = await response.json();
+      setAuthState({ status: "authenticated", user: userData });
+    } catch (error) {
+      console.warn("User is not authenticated:", (error as Error).message);
+      setAuthState({ status: "unauthenticated", user: null });
+    }
   };
 
+  // Run the verification check when the app loads
+  useEffect(() => {
+    verifyUser();
+  }, []);
+
+  // The login function now simply triggers a re-verification
+  const login = () => {
+    verifyUser();
+  };
+
+  // Function to handle user logout
   const logout = async () => {
     try {
       await fetch(`${API_BASE_URL}/api/auth/logout`, {
@@ -70,7 +76,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.error("Logout API call failed:", error);
     } finally {
-      Cookies.remove("token");
       setAuthState({ status: "unauthenticated", user: null });
     }
   };
@@ -82,6 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
+// Custom hook to use the auth context easily
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

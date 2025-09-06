@@ -1,18 +1,11 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { Mic, ArrowLeft, Mail, Lock, User } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Mail, Lock, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
 
@@ -33,7 +26,7 @@ const Auth = () => {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
 
-  // Handle login/signup
+  // Unified handler for login/signup
   const handleAuth = async (type: "login" | "signup") => {
     setIsLoading(true);
 
@@ -41,6 +34,7 @@ const Auth = () => {
     const endpoint = isLogin
       ? `${API_BASE_URL}/api/auth/login`
       : `${API_BASE_URL}/api/auth/signup`;
+
     const payload = isLogin
       ? { email: loginEmail, password: loginPassword }
       : {
@@ -50,39 +44,32 @@ const Auth = () => {
         };
 
     try {
-      // 1. Attempt login/signup
       const response = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
         credentials: "include",
       });
-      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error(data.message || `Failed to ${type}`);
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to ${type}`);
       }
+      
+      const successData = await response.json();
 
-      // 2. Fetch user profile after auth and update context
-      const userResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
-        credentials: "include",
-      });
-      const userData = await userResponse.json();
-      if (!userResponse.ok) {
-        throw new Error(
-          userData.message || "Could not fetch user data after login/signup."
-        );
-      }
-      login(userData);
+      // 2. If successful, call login() to trigger the context to re-verify the user
+      login();
 
-      // 3. Show success and redirect
-      toast({ title: "Success!", description: data.message });
+      // 3. Show success toast and redirect
+      toast({ title: "Success!", description: successData.message || `${type} successful!` });
       navigate("/dashboard");
     } catch (error: any) {
       console.error(`${type} failed:`, error);
       toast({
         variant: "destructive",
         title: "Uh oh!",
-        description: error.message || "Unexpected error.",
+        description: error.message || "An unexpected error occurred.",
       });
     } finally {
       setIsLoading(false);
@@ -91,7 +78,6 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/10">
-      {/* Main Content */}
       <main className="max-w-md mx-auto px-6 py-8">
         <Card className="bg-gradient-card border shadow-card">
           <CardHeader className="text-center">
@@ -209,27 +195,8 @@ const Auth = () => {
                 >
                   {isLoading ? "Creating Account..." : "Create Account"}
                 </Button>
-                <p className="text-xs text-muted-foreground text-center">
-                  By creating an account, you agree to our Terms of Service and
-                  Privacy Policy.
-                </p>
               </TabsContent>
             </Tabs>
-          </CardContent>
-        </Card>
-
-        {/* Info Card (Why create an account?) */}
-        <Card className="mt-8 bg-muted/50">
-          <CardContent className="pt-6">
-            <div className="text-center">
-              <h3 className="font-semibold mb-2">Why create an account?</h3>
-              <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Create and manage multiple sessions</li>
-                <li>• View detailed feedback analytics</li>
-                <li>• Track your speaking improvement</li>
-                <li>• Access session history</li>
-              </ul>
-            </div>
           </CardContent>
         </Card>
       </main>
