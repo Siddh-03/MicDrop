@@ -6,6 +6,8 @@ const { Server } = require("socket.io");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const mongoose = require("mongoose");
+const port = process.env.PORT || 3000;
+const mongoUrl = process.env.MONGO_URL;
 
 // Import Routes and Socket Handler
 const authRoutes = require("./routes/authRoutes");
@@ -14,11 +16,10 @@ const initializeSocket = require("./socket/socketHandler");
 
 // 2. INITIALIZE APP & DATABASE
 mongoose
-  .connect("mongodb://localhost:27017/micdrop", {})
+  .connect(mongoUrl, {})
   .then(() => console.log("✅ Connected to MongoDB"))
   .catch((err) => console.error("❌ MongoDB Connection Error:", err));
 const app = express();
-const port = process.env.PORT || 3000;
 const server = http.createServer(app);
 
 // 3. INITIALIZE SOCKET.IO
