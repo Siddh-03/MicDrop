@@ -20,10 +20,11 @@ exports.signup = async (req, res) => {
     const token = jwt.sign({ id: newUser._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production" || true,
       maxAge: 24 * 60 * 60 * 1000,
+      sameSite: "none",
     });
-    res.status(201).json({ message: "User created successfully!" });
+    res.status(201).json({ message: "User created successfully!", user: newUser });
   } catch (error) {
     res.status(500).json({ message: "Server error during signup." });
   }
@@ -46,10 +47,11 @@ exports.login = async (req, res) => {
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1d" });
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.NODE_ENV === "production" || true,
       maxAge: 24 * 60 * 60 * 1000,
+      sameSite: "none",
     });
-    res.status(200).json({ message: "Login successful!" });
+    res.status(200).json({ message: "Login successful!", user: user });
   } catch (error) {
     res.status(500).json({ message: "Server error during login." });
   }
