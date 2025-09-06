@@ -27,6 +27,8 @@ import { useToast } from "@/components/ui/use-toast";
 import { useParams, useNavigate } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 interface SessionDetails {
   _id: string;
   title: string;
@@ -70,7 +72,7 @@ const SpeakerDashboard = () => {
     const fetchSessionData = async () => {
       try {
         const response = await fetch(
-          `http://localhost:3000/api/sessions/${sessionCode}`,
+          `${API_BASE_URL}/api/sessions/${sessionCode}`,
           { credentials: "include" }
         );
         if (!response.ok) {
@@ -99,7 +101,7 @@ const SpeakerDashboard = () => {
     }
 
     if (!socketRef.current) {
-      socketRef.current = io("http://localhost:3000");
+      socketRef.current = io(API_BASE_URL);
       const socket = socketRef.current;
 
       socket.on("connect", () => {
@@ -139,7 +141,7 @@ const SpeakerDashboard = () => {
   const handleStartSession = async () => {
     try {
       const response = await fetch(
-        `http://localhost:3000/api/sessions/${sessionCode}/start`,
+        `${API_BASE_URL}/api/sessions/${sessionCode}/start`,
         { method: "PATCH", credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to start session.");
@@ -159,7 +161,7 @@ const SpeakerDashboard = () => {
     if (!window.confirm("End this session? This action is final.")) return;
     try {
       const response = await fetch(
-        `http://localhost:3000/api/sessions/${sessionCode}/end`,
+        `${API_BASE_URL}/api/sessions/${sessionCode}/end`,
         { method: "PATCH", credentials: "include" }
       );
       if (!response.ok) throw new Error("Failed to end session.");

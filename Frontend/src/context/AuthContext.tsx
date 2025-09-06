@@ -7,6 +7,8 @@ import React, {
 } from "react";
 import Cookies from "js-cookie";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 interface UserData {
   _id: string;
   username: string;
@@ -36,7 +38,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const verifyUser = async () => {
       try {
-        const response = await fetch("http://localhost:3000/api/auth/me", {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
           credentials: "include",
         });
 
@@ -61,7 +63,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      await fetch("http://localhost:3000/api/auth/logout", {
+      await fetch(`${API_BASE_URL}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

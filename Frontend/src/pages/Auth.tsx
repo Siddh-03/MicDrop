@@ -16,6 +16,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import { useAuth } from "@/context/AuthContext";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -37,8 +39,8 @@ const Auth = () => {
 
     const isLogin = type === "login";
     const endpoint = isLogin
-      ? "http://localhost:3000/api/auth/login"
-      : "http://localhost:3000/api/auth/signup";
+      ? `${API_BASE_URL}/api/auth/login`
+      : `${API_BASE_URL}/api/auth/signup`;
     const payload = isLogin
       ? { email: loginEmail, password: loginPassword }
       : {
@@ -61,7 +63,7 @@ const Auth = () => {
       }
 
       // 2. Fetch user profile after auth and update context
-      const userResponse = await fetch("http://localhost:3000/api/auth/me", {
+      const userResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
         credentials: "include",
       });
       const userData = await userResponse.json();

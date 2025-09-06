@@ -10,6 +10,8 @@ import { ThumbsUp, ThumbsDown, Clock, Users, Star, Loader2, XCircle } from "luci
 import { useParams, useNavigate } from "react-router-dom";
 import { io, Socket } from "socket.io-client";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 type VoteType = "positive" | "negative";
 
 interface SessionDetails {
@@ -45,7 +47,7 @@ const AudienceVoting = () => {
   // Main useEffect to fetch data and connect to WebSocket
   useEffect(() => {
     // Step 1: Fetch initial session details to validate
-    fetch(`http://localhost:3000/api/sessions/public/${sessionCode}`)
+    fetch(`${API_BASE_URL}/api/sessions/public/${sessionCode}`)
       .then(res => {
         if (!res.ok) return res.json().then(err => Promise.reject(new Error(err.message || "Session not found.")));
         return res.json();
@@ -57,7 +59,7 @@ const AudienceVoting = () => {
         setSession(data);
 
         // Step 2: If session is valid, connect the WebSocket
-        const socket = io("http://localhost:3000");
+        const socket = io(`${API_BASE_URL}`);
         socketRef.current = socket;
 
         socket.on('connect', () => {

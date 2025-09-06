@@ -9,6 +9,8 @@ import { Mic, ArrowLeft, Clock, Settings, CheckCircle, Calendar } from "lucide-r
 import { Link, useNavigate } from "react-router-dom"
 import { useToast } from "@/components/ui/use-toast"
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 const CreateSession = () => {
   const [sessionTitle, setSessionTitle] = useState("")
   const [gracePeriod, setGracePeriod] = useState("15")
@@ -34,7 +36,7 @@ const CreateSession = () => {
     const scheduledFor = new Date(`${sessionDate}T${sessionTime}`);
 
     try {
-      const response = await fetch('http://localhost:3000/api/sessions', {
+      const response = await fetch(`${API_BASE_URL}/api/sessions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -31,6 +31,8 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
 // --- INTERFACES ---
 interface UserData {
   _id: string;
@@ -90,7 +92,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const userResponse = await fetch("http://localhost:3000/api/auth/me", {
+        const userResponse = await fetch(`${API_BASE_URL}/api/auth/me`, {
           credentials: "include",
         });
         if (!userResponse.ok) {
@@ -103,10 +105,9 @@ const Dashboard = () => {
         const userData: UserData = await userResponse.json();
         setUser(userData);
 
-        const sessionsResponse = await fetch(
-          "http://localhost:3000/api/sessions",
-          { credentials: "include" }
-        );
+        const sessionsResponse = await fetch(`${API_BASE_URL}/api/sessions`, {
+          credentials: "include",
+        });
         if (!sessionsResponse.ok) throw new Error("Failed to fetch sessions.");
         const sessionsData: SessionData[] = await sessionsResponse.json();
         setSessions(sessionsData);
@@ -135,7 +136,7 @@ const Dashboard = () => {
       return;
     try {
       const response = await fetch(
-        `http://localhost:3000/api/sessions/${sessionId}`,
+        `${API_BASE_URL}/api/sessions/${sessionId}`,
         { method: "DELETE", credentials: "include" }
       );
       if (!response.ok) {
@@ -158,7 +159,7 @@ const Dashboard = () => {
     const scheduledFor = new Date(`${updatedDate}T${updatedTime}`);
     try {
       const response = await fetch(
-        `http://localhost:3000/api/sessions/${editingSession._id}`,
+        `${API_BASE_URL}/api/sessions/${editingSession._id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
