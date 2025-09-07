@@ -76,15 +76,6 @@ const CreateSession = () => {
   if (sessionCreated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-primary/10">
-        <header className="flex items-center justify-between p-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <Mic className="h-6 w-6 text-primary" />
-            </div>
-            <h1 className="text-xl font-bold">MicDrop🎤</h1>
-          </div>
-          <ThemeToggle />
-        </header>
         <main className="max-w-lg mx-auto px-6 py-8">
           <Card className="bg-gradient-card border shadow-glow">
             <CardHeader className="text-center">

@@ -239,10 +239,10 @@ const AudienceVoting = () => {
             </Card>
 
             <div className="grid grid-cols-1 gap-4">
-              <Button onClick={() => handleVote("positive")} /* ... your styling ... */ >
+              <Button onClick={() => handleVote("positive")} variant="outline"/* ... your styling ... */ >
                 <ThumbsUp className="h-6 w-6 mr-3" /> Engaged
               </Button>
-              <Button onClick={() => handleVote("negative")} /* ... your styling ... */ >
+              <Button onClick={() => handleVote("negative")} variant="destructive" /* ... your styling ... */ >
                 <ThumbsDown className="h-6 w-6 mr-3" /> Losing Me
               </Button>
             </div>
@@ -289,7 +289,7 @@ const AudienceVoting = () => {
           )}
           <div className="flex gap-3 pt-4">
             <Button variant="outline" onClick={() => setShowFeedbackDialog(false)} className="flex-1">Cancel</Button>
-            <Button onClick={submitFeedback} className="flex-1">Submit Feedback</Button>
+            <Button onClick={submitFeedback} className="flex-1" variant="ghost">Submit Feedback</Button>
           </div>
         </DialogContent>
       </Dialog>
