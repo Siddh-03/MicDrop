@@ -1,10 +1,9 @@
 # 🎤 MicDrop - Real-time Communication Platform
 
-A modern full-stack communication platform built with TypeScript, featuring real-time messaging, audio/video capabilities, and seamless user interactions.
+A modern full-stack communication platform built with TypeScript, featuring real-time messaging, and seamless user interactions.
 
 ## ✨ Features
 
-- 🎤 **Real-time Audio/Video Communication**
 - 💬 **Instant Messaging System**
 - 👥 **Multi-user Support**
 - 🔐 **Secure Authentication**
