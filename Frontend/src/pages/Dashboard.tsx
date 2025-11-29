@@ -166,7 +166,7 @@ const Dashboard = () => {
           body: JSON.stringify({
             title: updatedTitle,
             scheduledFor: scheduledFor.toISOString(),
-            gracePeriod: updatedGracePeriod,
+            gracePeriod: parseInt(updatedGracePeriod, 10),
           }),
           credentials: "include",
         }
@@ -197,7 +197,7 @@ const Dashboard = () => {
     event.stopPropagation();
     setEditingSession(session);
     setUpdatedTitle(session.title);
-    setUpdatedGracePeriod(session.gracePeriod);
+    setUpdatedGracePeriod(String(session.gracePeriod ?? "15"));
     const sessionDate = new Date(session.scheduledFor);
     setUpdatedDate(sessionDate.toISOString().split("T")[0]);
     setUpdatedTime(sessionDate.toTimeString().split(" ")[0].substring(0, 5));
@@ -280,25 +280,25 @@ const Dashboard = () => {
           <div className="mb-8">
             <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <Link to="/create-session">
-  <Card className="bg-card text-card-foreground dark:bg-gradient-primary dark:text-primary-foreground hover:shadow-glow transition-all duration-300 hover:scale-105 cursor-pointer">
-    <CardContent className="pt-6">
-      <div className="flex items-center gap-4">
-        {/* Icon Background */}
-        <div className="p-3 bg-primary/10 dark:bg-white/20 rounded-lg">
-          {/* Icon Color */}
-          <Plus className="h-6 w-6 text-primary dark:text-primary-foreground" />
-        </div>
-        <div>
-          <h4 className="font-semibold">Create New Session</h4>
-          <p className="text-sm text-muted-foreground">
-            Start a new presentation feedback session
-          </p>
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-</Link>
+              <Link to="/create-session">
+                <Card className="bg-card text-card-foreground dark:bg-gradient-primary dark:text-primary-foreground hover:shadow-glow transition-all duration-300 hover:scale-105 cursor-pointer">
+                  <CardContent className="pt-6">
+                    <div className="flex items-center gap-4">
+                      {/* Icon Background */}
+                      <div className="p-3 bg-primary/10 dark:bg-white/20 rounded-lg">
+                        {/* Icon Color */}
+                        <Plus className="h-6 w-6 text-primary dark:text-primary-foreground" />
+                      </div>
+                      <div>
+                        <h4 className="font-semibold">Create New Session</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Start a new presentation feedback session
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
               <Card className="bg-accent text-accent-foreground hover:shadow-card transition-all duration-300 hover:scale-105 cursor-pointer">
                 <CardContent className="pt-6">
                   <div className="flex items-center gap-4">
